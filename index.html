@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTML5 Banner Click Tag Tool</title>
+<style>
+  :root{
+    --bg:#0f1115;
+    --panel:#171a21;
+    --panel-2:#1e222b;
+    --line:#2a2f3a;
+    --text:#e7eaf0;
+    --muted:#9aa3b2;
+    --accent:#4f8cff;
+    --accent-2:#3f7bef;
+    --good:#3ecf8e;
+    --warn:#f0b24a;
+    --bad:#f0625d;
+    --radius:12px;
+    --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1060px;margin:0 auto;padding:32px 24px 64px}
+  header{margin-bottom:28px}
+  h1{font-size:22px;margin:0 0 6px;letter-spacing:-0.01em}
+  .sub{color:var(--muted);font-size:14px;margin:0}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  @media (max-width:820px){.grid{grid-template-columns:1fr}}
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:20px;
+  }
+  .card h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 16px;font-weight:600}
+  label{display:block;font-size:13px;color:var(--muted);margin:0 0 6px}
+  .field{margin-bottom:16px}
+  input[type=text],input[type=number],input[type=url]{
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    color:var(--text);
+    border-radius:9px;
+    padding:10px 12px;
+    font-size:14px;
+    font-family:var(--font);
+    outline:none;
+    transition:border-color .15s;
+  }
+  input:focus{border-color:var(--accent)}
+  .dims{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .drop{
+    border:1.5px dashed var(--line);
+    border-radius:11px;
+    padding:26px 18px;
+    text-align:center;
+    color:var(--muted);
+    cursor:pointer;
+    transition:border-color .15s,background .15s;
+    background:var(--panel-2);
+  }
+  .drop:hover,.drop.drag{border-color:var(--accent);background:#1b2330}
+  .drop strong{color:var(--text);display:block;font-size:14px;margin-bottom:4px}
+  .drop small{font-size:12px}
+  .filechip{
+    display:none;align-items:center;gap:10px;margin-top:12px;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:9px 12px;font-size:13px;
+  }
+  .filechip.show{display:flex}
+  .filechip .name{color:var(--text);font-family:var(--mono);font-size:12px;word-break:break-all}
+  .filechip .x{margin-left:auto;color:var(--muted);cursor:pointer;font-size:16px;line-height:1}
+  .filechip .x:hover{color:var(--bad)}
+  .row-btns{display:flex;gap:12px;margin-top:4px;flex-wrap:wrap}
+  button{
+    font-family:var(--font);font-size:14px;font-weight:600;cursor:pointer;
+    border-radius:9px;padding:11px 18px;border:1px solid transparent;transition:background .15s,opacity .15s;
+  }
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{background:var(--accent-2)}
+  .btn-primary:disabled{opacity:.45;cursor:not-allowed}
+  .btn-ghost{background:transparent;color:var(--text);border-color:var(--line)}
+  .btn-ghost:hover{border-color:var(--accent)}
+  .notes{margin-top:14px;font-size:12.5px;color:var(--muted)}
+  .msg{margin-top:14px;padding:11px 14px;border-radius:9px;font-size:13px;display:none}
+  .msg.show{display:block}
+  .msg.ok{background:rgba(62,207,142,.12);border:1px solid rgba(62,207,142,.35);color:#a8ecca}
+  .msg.err{background:rgba(240,98,93,.12);border:1px solid rgba(240,98,93,.35);color:#f4b0ad}
+  .msg.warn{background:rgba(240,178,74,.12);border:1px solid rgba(240,178,74,.35);color:#f2d49a}
+  .msg ul{margin:6px 0 0;padding-left:18px}
+  .out-actions{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap}
+  .out-actions.hidden{display:none}
+  pre.preview{
+    margin:14px 0 0;background:#0b0d11;border:1px solid var(--line);border-radius:9px;
+    padding:14px;overflow:auto;max-height:340px;font-family:var(--mono);font-size:12px;color:#c8d0dc;white-space:pre;
+  }
+  .hl{color:var(--good)}
+  .step{display:flex;gap:10px;font-size:13px;color:var(--muted);margin-bottom:8px;align-items:flex-start}
+  .step .n{background:var(--panel-2);border:1px solid var(--line);border-radius:50%;width:20px;height:20px;
+    display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text);flex:0 0 20px;margin-top:1px}
+  .foot{margin-top:26px;font-size:12px;color:var(--muted);text-align:center}
+  a.link{color:var(--accent);text-decoration:none}
+  a.link:hover{text-decoration:underline}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>HTML5 Banner Click Tag Tool</h1>
+    <p class="sub">Upload a banner HTML file, set the dimensions and project URL, and download the updated file with the <code>ad.size</code> meta tag and click tag injected &mdash; exactly as in your process doc.</p>
+  </header>
+
+  <div class="grid">
+    <!-- LEFT: inputs -->
+    <div class="card">
+      <h2>1 &nbsp;Inputs</h2>
+
+      <div class="field">
+        <label>Banner HTML file</label>
+        <div class="drop" id="drop">
+          <strong>Drop your .html file here</strong>
+          <small>or click to browse</small>
+          <input type="file" id="file" accept=".html,.htm,text/html" style="display:none">
+        </div>
+        <div class="filechip" id="chip">
+          <span>📄</span>
+          <span class="name" id="chipName"></span>
+          <span class="x" id="chipX" title="Remove">&times;</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Project title <span style="opacity:.7">(optional — updates the &lt;title&gt; tag)</span></label>
+        <input type="text" id="title" placeholder="e.g. The Grand Residences">
+      </div>
+
+      <div class="field">
+        <label>Dimensions (px)</label>
+        <div class="dims">
+          <input type="number" id="w" placeholder="Width e.g. 300" min="1">
+          <input type="number" id="h" placeholder="Height e.g. 600" min="1">
+        </div>
+        <div class="notes" id="dimNote" style="display:none"></div>
+      </div>
+
+      <div class="field">
+        <label>Project URL (click tag destination)</label>
+        <input type="url" id="url" placeholder="https://www.projecturl.com.au">
+        <div class="notes">Must be secure (https).</div>
+      </div>
+
+      <div class="row-btns">
+        <button class="btn-primary" id="processBtn" disabled>Process banner</button>
+        <button class="btn-ghost" id="resetBtn">Reset</button>
+      </div>
+
+      <div class="msg" id="msg"></div>
+    </div>
+
+    <!-- RIGHT: output + what it does -->
+    <div class="card">
+      <h2>2 &nbsp;Result</h2>
+
+      <div id="emptyState">
+        <div class="step"><span class="n">1</span><span>Injects <code>&lt;meta name="ad.size"&gt;</code> plus the jQuery + clickTag script right after <code>&lt;/title&gt;</code> (replacing the <code>&lt;!-- write your code here --&gt;</code> placeholder if present).</span></div>
+        <div class="step"><span class="n">2</span><span>Sets <code>clickTag</code> to your project URL and the meta content to your width &times; height.</span></div>
+        <div class="step"><span class="n">3</span><span>Wraps the banner in <code>&lt;a href="javascript:window.open(window.clickTag)"&gt;</code> right after <code>&lt;body&gt;</code> and closes <code>&lt;/a&gt;</code> before <code>&lt;/body&gt;</code>.</span></div>
+        <div class="notes">Then just re-zip the HTML with its images folder and upload to the <a class="link" href="https://h5validator.appspot.com/dcm/asset" target="_blank" rel="noopener">H5 Validator</a>.</div>
+      </div>
+
+      <div class="out-actions hidden" id="outActions">
+        <button class="btn-primary" id="downloadBtn">Download updated HTML</button>
+        <button class="btn-ghost" id="copyBtn">Copy to clipboard</button>
+      </div>
+      <pre class="preview" id="preview" style="display:none"></pre>
+    </div>
+  </div>
+
+  <p class="foot">Runs entirely in your browser &mdash; nothing is uploaded to any server.</p>
+</div>
+
+<script>
+(function(){
+  var fileInput=document.getElementById('file');
+  var drop=document.getElementById('drop');
+  var chip=document.getElementById('chip');
+  var chipName=document.getElementById('chipName');
+  var chipX=document.getElementById('chipX');
+  var titleIn=document.getElementById('title');
+  var wIn=document.getElementById('w');
+  var hIn=document.getElementById('h');
+  var urlIn=document.getElementById('url');
+  var processBtn=document.getElementById('processBtn');
+  var resetBtn=document.getElementById('resetBtn');
+  var msg=document.getElementById('msg');
+  var dimNote=document.getElementById('dimNote');
+  var emptyState=document.getElementById('emptyState');
+  var outActions=document.getElementById('outActions');
+  var downloadBtn=document.getElementById('downloadBtn');
+  var copyBtn=document.getElementById('copyBtn');
+  var preview=document.getElementById('preview');
+
+  var state={ name:null, html:null, output:null };
+
+  function showMsg(type, html){
+    msg.className='msg show '+type;
+    msg.innerHTML=html;
+  }
+  function clearMsg(){ msg.className='msg'; msg.innerHTML=''; }
+
+  function updateBtn(){
+    processBtn.disabled = !(state.html && wIn.value && hIn.value && urlIn.value.trim());
+  }
+
+  // ---- File handling ----
+  function readFile(file){
+    if(!file) return;
+    if(!/\.html?$/i.test(file.name)){
+      showMsg('err','Please choose an <b>.html</b> file.');
+      return;
+    }
+    var r=new FileReader();
+    r.onload=function(e){
+      state.name=file.name;
+      state.html=e.target.result;
+      chipName.textContent=file.name;
+      chip.classList.add('show');
+      clearMsg();
+      autoDetectDims(state.html);
+      updateBtn();
+    };
+    r.readAsText(file);
+  }
+
+  function autoDetectDims(html){
+    // Try existing ad.size meta first
+    var m=html.match(/name=["']ad\.size["'][^>]*content=["'][^"']*width\s*=\s*(\d+)\s*,\s*height\s*=\s*(\d+)/i);
+    if(!m){
+      // Generic "width=NNN,height=NNN"
+      m=html.match(/width\s*=\s*(\d+)\s*,\s*height\s*=\s*(\d+)/i);
+    }
+    if(m){
+      if(!wIn.value) wIn.value=m[1];
+      if(!hIn.value) hIn.value=m[2];
+      dimNote.style.display='block';
+      dimNote.textContent='Auto-detected '+m[1]+'×'+m[2]+' from the file — edit if needed.';
+    } else {
+      dimNote.style.display='none';
+    }
+  }
+
+  drop.addEventListener('click',function(){ fileInput.click(); });
+  fileInput.addEventListener('change',function(e){ readFile(e.target.files[0]); });
+  ['dragenter','dragover'].forEach(function(ev){
+    drop.addEventListener(ev,function(e){ e.preventDefault(); drop.classList.add('drag'); });
+  });
+  ['dragleave','drop'].forEach(function(ev){
+    drop.addEventListener(ev,function(e){ e.preventDefault(); drop.classList.remove('drag'); });
+  });
+  drop.addEventListener('drop',function(e){
+    if(e.dataTransfer.files.length) readFile(e.dataTransfer.files[0]);
+  });
+  chipX.addEventListener('click',function(){
+    state.name=null; state.html=null; state.output=null;
+    chip.classList.remove('show'); chipName.textContent='';
+    fileInput.value=''; dimNote.style.display='none';
+    resetOutput(); updateBtn();
+  });
+
+  [wIn,hIn,urlIn].forEach(function(el){ el.addEventListener('input',updateBtn); });
+
+  // ---- Core injection ----
+  function buildInjection(w,h,url){
+    return '<meta name="ad.size" content="width='+w+',height='+h+'">\n'+
+      '<script src="https://code.jquery.com/jquery-1.9.1.js"><\/script>\n'+
+      '<script>\n'+
+      '  var clickTag = "'+url+'";\n'+
+      '  function resizeWindow()\n'+
+      '  {\n'+
+      "    $('p').css({ 'width':'100%', 'text-align':'center' });\n"+
+      "    var h1 = $('h1').height();\n"+
+      '    var h = h1/2;\n'+
+      '    var WinHeight = $(window).height();\n'+
+      '    var w = WinHeight/2;\n'+
+      '    var m = w - h;\n'+
+      '    var WinWidth=$(window).width();\n'+
+      '    $(\'p\').css("margin-top",m + "px");\n'+
+      '    $("p").text("Size="+WinWidth+"x"+WinHeight);\n'+
+      '  }\n'+
+      '  $(document).ready(function () {\n'+
+      '    resizeWindow();\n'+
+      '  });\n'+
+      '  $(window).resize(function () {\n'+
+      '    resizeWindow();\n'+
+      '  });\n'+
+      '<\/script>';
+  }
+
+  function escapeHtml(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function process(html,w,h,url,title){
+    var warnings=[];
+    var out=html;
+
+    // Guard: already has a clickTag var?
+    if(/var\s+clickTag\s*=/.test(out)){
+      warnings.push('This file already contains a <code>clickTag</code> variable — the new script block was still added, but check for duplicates.');
+    }
+
+    // 0) Update the <title> content if a project title was given
+    if(title){
+      var safeTitle=escapeHtml(title);
+      if(/<title>[\s\S]*?<\/title>/i.test(out)){
+        out=out.replace(/<title>[\s\S]*?<\/title>/i,'<title>'+safeTitle+'</title>');
+      } else if(/<head[^>]*>/i.test(out)){
+        out=out.replace(/<head[^>]*>/i,function(m){ return m+'\n<title>'+safeTitle+'</title>'; });
+        warnings.push('No existing <code>&lt;title&gt;</code> tag was found, so a new one was added to the head.');
+      } else {
+        warnings.push('No <code>&lt;title&gt;</code> or <code>&lt;head&gt;</code> found — the project title could not be set.');
+      }
+    }
+
+    var block=buildInjection(w,h,url);
+
+    // 1) Head injection: replace placeholder comment, else after </title>, else after <head>, else before </head>
+    var placeholder=/<!--\s*write your code here\s*-->/i;
+    if(placeholder.test(out)){
+      out=out.replace(placeholder,block);
+    } else if(/<\/title>/i.test(out)){
+      out=out.replace(/<\/title>/i,function(m){ return m+'\n'+block; });
+    } else if(/<head[^>]*>/i.test(out)){
+      out=out.replace(/<head[^>]*>/i,function(m){ return m+'\n'+block; });
+    } else if(/<\/head>/i.test(out)){
+      out=out.replace(/<\/head>/i,function(m){ return block+'\n'+m; });
+    } else {
+      warnings.push('No <code>&lt;head&gt;</code> or <code>&lt;/title&gt;</code> found — the meta/script block was prepended to the top of the file.');
+      out=block+'\n'+out;
+    }
+
+    // 2) Body anchor open, right after <body ...>
+    var anchorOpen='<a href="javascript:window.open(window.clickTag)">';
+    if(/<body[^>]*>/i.test(out)){
+      if(out.indexOf('window.open(window.clickTag)')===-1 || !/<body[^>]*>\s*<a href="javascript:window\.open\(window\.clickTag\)">/i.test(out)){
+        out=out.replace(/<body[^>]*>/i,function(m){ return m+'\n'+anchorOpen; });
+      }
+    } else {
+      warnings.push('No <code>&lt;body&gt;</code> tag found — could not add the opening click anchor.');
+    }
+
+    // 3) Close anchor before </body>
+    if(/<\/body>/i.test(out)){
+      out=out.replace(/<\/body>/i,function(m){ return '</a>\n'+m; });
+    } else {
+      warnings.push('No <code>&lt;/body&gt;</code> tag found — could not close the click anchor.');
+    }
+
+    return { html:out, warnings:warnings };
+  }
+
+  processBtn.addEventListener('click',function(){
+    clearMsg();
+    var w=parseInt(wIn.value,10), h=parseInt(hIn.value,10);
+    var url=urlIn.value.trim();
+    if(!w||!h||w<1||h<1){ showMsg('err','Enter valid width and height.'); return; }
+    if(!state.html){ showMsg('err','Upload an HTML file first.'); return; }
+
+    var res=process(state.html,w,h,url,titleIn.value.trim());
+    state.output=res.html;
+
+    // Render output
+    emptyState.style.display='none';
+    outActions.classList.remove('hidden');
+    preview.style.display='block';
+    preview.textContent=res.html;
+
+    var httpsOk=/^https:\/\//i.test(url);
+    var parts=[];
+    if(!httpsOk){
+      parts.push('warn','<b>Heads up:</b> the URL is not <code>https</code>. Click tags should use a secure URL.');
+    }
+    if(res.warnings.length){
+      var w2='<b>Processed with notes:</b><ul>'+res.warnings.map(function(x){return '<li>'+x+'</li>';}).join('')+'</ul>';
+      if(parts.length){ parts[1]=parts[1]+'<br>'+w2; } else { parts.push('warn',w2); }
+    }
+    if(parts.length){
+      showMsg(parts[0],parts[1]);
+    } else {
+      showMsg('ok','Done — <b>'+state.name+'</b> updated with the click tag and <code>ad.size</code> ('+w+'×'+h+'). Download it, then re-zip with the images folder for the validator.');
+    }
+  });
+
+  function resetOutput(){
+    emptyState.style.display='block';
+    outActions.classList.add('hidden');
+    preview.style.display='none';
+    preview.textContent='';
+    state.output=null;
+  }
+
+  resetBtn.addEventListener('click',function(){
+    state={name:null,html:null,output:null};
+    chip.classList.remove('show'); chipName.textContent='';
+    fileInput.value=''; titleIn.value=''; wIn.value=''; hIn.value=''; urlIn.value='';
+    dimNote.style.display='none';
+    clearMsg(); resetOutput(); updateBtn();
+  });
+
+  downloadBtn.addEventListener('click',function(){
+    if(!state.output) return;
+    var blob=new Blob([state.output],{type:'text/html'});
+    var a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download=state.name || 'banner.html';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); },100);
+  });
+
+  copyBtn.addEventListener('click',function(){
+    if(!state.output) return;
+    navigator.clipboard.writeText(state.output).then(function(){
+      copyBtn.textContent='Copied!';
+      setTimeout(function(){ copyBtn.textContent='Copy to clipboard'; },1400);
+    });
+  });
+})();
+</script>
+</body>
+</html>
