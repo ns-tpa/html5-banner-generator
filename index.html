@@ -16,14 +16,14 @@
   header .mark{font-family:Georgia,serif;letter-spacing:.22em;text-transform:uppercase;font-size:13px;opacity:.85}
   header h1{font-family:Georgia,serif;font-weight:400;font-size:19px;letter-spacing:.02em}
   header .sub{margin-left:auto;font-size:12px;color:#e9d9c8;opacity:.85;max-width:380px;text-align:right}
-  .wrap{display:grid;grid-template-columns:minmax(380px,460px) 1fr;min-height:calc(100vh - 58px)}
+  .wrap{display:grid;grid-template-columns:minmax(380px,460px) minmax(0,1fr);min-height:calc(100vh - 58px)}
   .panel{padding:20px 26px}
   .form{border-right:1px solid var(--line);background:#fff;overflow-y:auto}
   .preview{background:var(--cream);display:flex;flex-direction:column}
   .step{margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid #f0e7db}
   .step:last-of-type{border-bottom:none}
-  .step h3{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--brown);margin-bottom:10px;display:flex;align-items:center;gap:8px}
-  .step h3 .n{background:var(--brown);color:#fff;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex:0 0 auto}
+  .step h2{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--brown);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .step h2 .n{background:var(--brown);color:#fff;width:20px;height:20px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:11px;flex:0 0 auto}
   label.fld{display:block;font-size:11.5px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);margin:0 0 5px}
   input[type=text],input[type=url],input[type=number]{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;font-size:14px;background:#fff;color:var(--ink)}
   input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(140,90,60,.12)}
@@ -78,7 +78,7 @@
   <div class="panel form">
     <!-- STEP 1: SVG design -->
     <div class="step" id="step1">
-      <h3><span class="n">1</span> Banner design (SVG)</h3>
+      <h2><span class="n">1</span> Banner design (SVG)</h2>
       <div class="dz" id="svgDz"><b>Click to choose</b> or drop your SVG here<br>
         <span style="font-size:11.5px">All text, wordmark, CTA &amp; layout come from this file</span></div>
       <input type="file" id="svgFile" accept=".svg,image/svg+xml" hidden>
@@ -87,14 +87,14 @@
 
     <!-- STEP 2: photo slot -->
     <div class="step disabledStep" id="step2">
-      <h3><span class="n">2</span> Photo slot</h3>
+      <h2><span class="n">2</span> Photo slot</h2>
       <div class="hint" id="slotHint">The image region(s) detected in your SVG. Pick the one the carousel replaces.</div>
       <div class="slots" id="slots"></div>
     </div>
 
     <!-- STEP 3: carousel images -->
     <div class="step disabledStep" id="step3">
-      <h3><span class="n">3</span> Carousel images (3–5)</h3>
+      <h2><span class="n">3</span> Carousel images (3–5)</h2>
       <div class="dz" id="imgDz"><b>Click to choose</b> or drop images here<br>
         <span style="font-size:11.5px">JPG / PNG / WebP · first image shows first</span></div>
       <input type="file" id="imgFile" accept="image/*" multiple hidden>
@@ -103,7 +103,7 @@
 
     <!-- STEP 4: settings -->
     <div class="step disabledStep" id="step4">
-      <h3><span class="n">4</span> Link &amp; timing</h3>
+      <h2><span class="n">4</span> Link &amp; timing</h2>
       <div style="margin-bottom:12px">
         <label class="fld" for="purl">Project URL (click-through)</label>
         <input type="url" id="purl" placeholder="https://…">
@@ -320,14 +320,39 @@ svgInner+'\n'+
 
   function setMsg(t,k){var m=$('msg');m.textContent=t||'';m.className='msg '+(k||'err')+(t?' show':'');}
   function hrefOf(el){return el.getAttribute('href')||el.getAttributeNS(XLINK,'href')||el.getAttribute('xlink:href')||'';}
-  function extOf(f){var t=(f.type||'').split('/')[1]||'';t=t.replace('jpeg','jpg');if(!t){var m=(f.name||'').match(/\.(\w+)$/);t=m?m[1].toLowerCase():'jpg';}if(t==='jpeg')t='jpg';if(t==='svg+xml')t='svg';return t;}
-  function readAsDataURL(f){return new Promise(function(res){var r=new FileReader();r.onload=function(){res(r.result);};r.readAsDataURL(f);});}
-  function readAsText(f){return new Promise(function(res){var r=new FileReader();r.onload=function(){res(r.result);};r.readAsText(f);});}
+  function extOf(f){var t=/^image\//i.test(f.type||'')?(f.type||'').split('/')[1]||'':'';t=t.replace('jpeg','jpg');if(!t){var m=(f.name||'').match(/\.(\w+)$/);t=m?m[1].toLowerCase():'jpg';}if(t==='jpeg')t='jpg';if(t==='svg+xml')t='svg';return t;}
+  function readFile(f,method){return new Promise(function(res,reject){
+    var r=new FileReader();
+    r.onload=function(){res(r.result);};
+    r.onerror=function(){reject(new Error('Could not read '+f.name+'. Please choose the file again.'));};
+    r.onabort=function(){reject(new Error('Reading '+f.name+' was cancelled. Please try again.'));};
+    r[method](f);
+  });}
+  function readAsDataURL(f){return readFile(f,'readAsDataURL');}
+  function readAsText(f){return readFile(f,'readAsText');}
+  function readImage(f){return readAsDataURL(f).then(function(url){return new Promise(function(res,reject){
+    var image=new Image();
+    image.onload=function(){res(url);};
+    image.onerror=function(){reject(new Error(f.name+' is not a readable image. Choose a valid JPG, PNG or WebP file.'));};
+    image.src=url;
+  });});}
+  function dimension(svg,name,fallback){
+    var raw=svg.getAttribute(name)||'';
+    if(!raw||/%|em|ex|rem|vh|vw/i.test(raw)) return fallback;
+    var value=svg[name]&&svg[name].baseVal ? svg[name].baseVal.value : parseFloat(raw);
+    return isFinite(value)&&value>0 ? value : fallback;
+  }
+  function svgById(svg,id){
+    var elements=svg.querySelectorAll('[id]');
+    for(var i=0;i<elements.length;i++){if(elements[i].id===id) return elements[i];}
+    return null;
+  }
   function safe(s){return (s||'Banner').replace(/[^\w\-]+/g,'_').replace(/^_+|_+$/g,'')||'Banner';}
   function enable(step,on){ $(step).classList.toggle('disabledStep',!on); }
 
   // ---------- SVG load + slot detection ----------
   async function loadSVG(file){
+    try{
     var text=await readAsText(file);
     var doc=new DOMParser().parseFromString(text,'image/svg+xml');
     var err=doc.querySelector('parsererror');
@@ -340,20 +365,23 @@ svgInner+'\n'+
     state.svgMounted=mounted;
     // dimensions
     var vb=(mounted.getAttribute('viewBox')||'').trim().split(/[\s,]+/).map(Number);
-    var w=parseFloat(mounted.getAttribute('width'))|| (vb.length===4?vb[2]:0);
-    var h=parseFloat(mounted.getAttribute('height'))|| (vb.length===4?vb[3]:0);
-    if(vb.length===4){ if(!w)w=vb[2]; if(!h)h=vb[3]; }
+    var hasViewBox=vb.length===4&&vb.every(function(v){return isFinite(v);})&&vb[2]>0&&vb[3]>0;
+    var w=dimension(mounted,'width',hasViewBox?vb[2]:300);
+    var h=dimension(mounted,'height',hasViewBox?vb[3]:600);
     state.W=Math.round(w||300); state.H=Math.round(h||600);
     // ensure it scales: keep viewBox, drop fixed px so CSS controls size
-    if(vb.length!==4){ mounted.setAttribute('viewBox','0 0 '+state.W+' '+state.H); }
+    if(!hasViewBox){ mounted.setAttribute('viewBox','0 0 '+state.W+' '+state.H); }
     detectSlots();
     // default project name from filename
     if(!$('pname').value){ $('pname').value=(file.name||'').replace(/\.svg$/i,''); }
     $('svgOk').style.display='flex';
-    $('svgOk').innerHTML='✓ Loaded <b>&nbsp;'+(file.name||'design.svg')+'</b> &nbsp;·&nbsp; '+state.W+' × '+state.H+' px';
+    $('svgOk').innerHTML='✓ Loaded <b></b>';
+    $('svgOk').querySelector('b').textContent='\u00a0'+(file.name||'design.svg');
+    $('svgOk').appendChild(document.createTextNode(' \u00a0·\u00a0 '+state.W+' × '+state.H+' px'));
     enable('step2',true); enable('step3',true); enable('step4',true);
     state.prepared=null; state.preparedKey='';
     update();
+    }catch(e){setMsg(e.message||'Could not load the SVG. Please choose the file again.','err');}
   }
 
   function detectSlots(){
@@ -365,14 +393,13 @@ svgInner+'\n'+
     });
     // shapes with a pattern fill that wraps an <image>
     [].forEach.call(svg.querySelectorAll('rect,path,circle,ellipse,polygon'),function(sh){
-      var fill=sh.getAttribute('fill')||sh.getAttribute('style')||'';
-      var m=fill.match(/url\(["']?#([^"')]+)["']?\)/);
+      var fill=sh.style.fill||sh.getAttribute('fill')||getComputedStyle(sh).fill||'';
+      var m=fill.match(/url\(["']?[^"')]*#([^"')]+)["']?\)/);
       if(!m) return;
-      var pat=svg.getElementById?svg.getElementById(m[1]):svg.querySelector('#'+CSS.escape(m[1]));
-      if(!pat) { var byId=svg.querySelector('[id="'+m[1]+'"]'); pat=byId; }
+      var pat=svgById(svg,m[1]);
       if(!pat||pat.tagName.toLowerCase()!=='pattern') return;
       var img=pat.querySelector('image');
-      if(!img){ var use=pat.querySelector('use'); if(use){ var uid=hrefOf(use).replace('#',''); img=svg.querySelector('[id="'+uid+'"]'); } }
+      if(!img){ var use=pat.querySelector('use'); if(use){ var uid=hrefOf(use).replace('#',''); img=svgById(svg,uid); } }
       if(!img) return;
       out.push({el:sh,kind:'pattern',thumb:hrefOf(img),patImg:img,patEl:pat});
     });
@@ -400,8 +427,10 @@ svgInner+'\n'+
     var ul=$('thumbs'); ul.innerHTML='';
     state.images.forEach(function(it,i){
       var li=document.createElement('li');
-      li.innerHTML='<span class="idx">'+(i+1)+'</span><img src="'+it.dataUrl+'"><span class="nm">'+it.name+'</span>'+
+      li.innerHTML='<span class="idx">'+(i+1)+'</span><img><span class="nm"></span>'+
         '<button data-a="up">↑</button><button data-a="down">↓</button><button data-a="del">✕</button>';
+      li.querySelector('img').src=it.dataUrl;
+      li.querySelector('.nm').textContent=it.name;
       li.querySelectorAll('button').forEach(function(b){
         b.onclick=function(){var a=b.getAttribute('data-a');
           if(a==='del')state.images.splice(i,1);
@@ -414,12 +443,18 @@ svgInner+'\n'+
     });
   }
   function addImages(list){
-    var arr=[].slice.call(list).filter(function(f){return /^image\//.test(f.type)&&!/svg/.test(f.type);});
-    arr=arr.slice(0,Math.max(0,5-state.images.length));
-    Promise.all(arr.map(readAsDataURL)).then(function(urls){
-      arr.forEach(function(f,i){ state.images.push({file:f,dataUrl:urls[i],name:f.name,ext:extOf(f)}); });
-      state.prepared=null; renderThumbs(); update();
+    var arr=[].slice.call(list).filter(function(f){
+      var type=(f.type||'').toLowerCase();
+      return !/svg/.test(type)&&!/\.svg$/i.test(f.name)&&(
+        /^image\//.test(type)||((!type||type==='application/octet-stream')&&/\.(jpe?g|png|webp|gif|avif|bmp)$/i.test(f.name))
+      );
     });
+    if(!arr.length&&list.length){setMsg('Choose JPG, PNG or WebP image files.','err');return;}
+    arr=arr.slice(0,Math.max(0,5-state.images.length));
+    Promise.all(arr.map(readImage)).then(function(urls){
+      arr.forEach(function(f,i){ if(state.images.length<5)state.images.push({file:f,dataUrl:urls[i],name:f.name,ext:extOf(f)}); });
+      state.prepared=null; renderThumbs(); update();
+    }).catch(function(e){setMsg(e.message||'Could not load those images. Please try again.','err');});
   }
 
   // ---------- build prepared SVG (surgery) ----------
@@ -441,14 +476,14 @@ svgInner+'\n'+
         // clip
         var clip=document.createElementNS(SVGNS,'clipPath'); clip.setAttribute('id',T.CLS.clip);
         clip.setAttribute('clipPathUnits','userSpaceOnUse');
-        if(tag.toLowerCase()==='rect'){
+        if(tag.toLowerCase()==='rect'||tag.toLowerCase()==='image'){
           var cr=document.createElementNS(SVGNS,'rect');
           cr.setAttribute('x',bbox.x); cr.setAttribute('y',bbox.y);
           cr.setAttribute('width',bbox.width); cr.setAttribute('height',bbox.height);
           var rx=cloneSlot.getAttribute('rx'); if(rx) cr.setAttribute('rx',rx);
           clip.appendChild(cr);
         } else {
-          var shClone=cloneSlot.cloneNode(true); shClone.removeAttribute('fill'); shClone.removeAttribute('style'); clip.appendChild(shClone);
+          var shClone=cloneSlot.cloneNode(true); shClone.removeAttribute('fill'); shClone.removeAttribute('style'); shClone.removeAttribute('transform'); clip.appendChild(shClone);
         }
         defs.appendChild(clip);
         // group
@@ -465,13 +500,7 @@ svgInner+'\n'+
         }
         cloneSlot.parentNode.insertBefore(g,cloneSlot);
         cloneSlot.parentNode.removeChild(cloneSlot);
-        // cleanup placeholder pattern + its image (slim output)
-        if(slot.kind==='pattern' && slot.patEl){
-          var pid=slot.patEl.getAttribute('id');
-          var pEl=clone.querySelector('[id="'+pid+'"]'); if(pEl&&pEl.parentNode) pEl.parentNode.removeChild(pEl);
-          var imgId=slot.patImg&&slot.patImg.getAttribute('id');
-          if(imgId){ var iEl=clone.querySelector('[id="'+imgId+'"]'); if(iEl&&iEl.parentNode) iEl.parentNode.removeChild(iEl); }
-        }
+        // Other artwork may share this pattern or image, so retain its definitions.
       }
     }
     state.prepared={clone:clone,layers:layers};
@@ -502,32 +531,35 @@ svgInner+'\n'+
     var n=state.images.length, t=timing();
     var total=(n*(t.slideDuration/1000)*(t.loops||1));
     $('meta').textContent = state.svgMounted ? (state.W+' × '+state.H+' px · '+n+' image'+(n===1?'':'s')+(n?(' · ~'+total.toFixed(1)+'s'+(t.loops&&total>15?' ⚠ >15s':'')):'')) : '';
-    if(!state.svgMounted || n<1){
+    if(!state.svgMounted){
       $('frameWrap').style.display='none'; $('emptyMsg').style.display='block';
       $('download').disabled=true;
       $('emptyMsg').textContent = !state.svgMounted ? 'Upload an SVG design and carousel images to preview your banner.' : 'Add at least one carousel image to preview.';
       return;
     }
-    ensurePrepared();
-    var inner=serialize(state.images.map(function(it){return it.dataUrl;}));
+    var inner;
+    if(n){ensurePrepared();inner=serialize(state.images.map(function(it){return it.dataUrl;}));}
+    else{inner=new XMLSerializer().serializeToString(state.svgMounted);}
     var html=T.buildIndexHtml(Object.assign({
       svgInner:inner,width:state.W,height:state.H,
       projectName:$('pname').value||'Banner',projectUrl:$('purl').value||'https://www.example.com'
     },t));
     var stage=$('stage'),fw=$('frameWrap'),fr=$('frame');
-    var scale=Math.min(1,(stage.clientWidth-28)/state.W,(stage.clientHeight-28)/state.H);
+    var scale=Math.max(0.01,Math.min(1,(stage.clientWidth-28)/state.W,(stage.clientHeight-28)/state.H));
     fr.width=state.W;fr.height=state.H;fr.style.width=state.W+'px';fr.style.height=state.H+'px';
     fw.style.width=state.W+'px';fw.style.height=state.H+'px';fw.style.transform='scale('+scale.toFixed(4)+')';
     fr.srcdoc=html; fw.style.display='block'; $('emptyMsg').style.display='none';
-    $('download').disabled=(n<1);
+    $('download').disabled=(state.slots.length>0&&n<1);
     var url=$('purl').value.trim();
-    if(n<3) setMsg('Tip: 3–5 images recommended for a carousel.','err');
+    if(state.slots.length&&n<1) setMsg('Design preview ready. Add photos to export the carousel.','err');
+    else if(n&&n<3) setMsg('Tip: 3–5 images recommended for a carousel.','err');
     else if(url&&!/^https:\/\//i.test(url)) setMsg('Tip: click-through URL should start with https://','err');
     else setMsg('Ready to export.','good');
   }
 
   async function download(){
-    if(!state.svgMounted||state.images.length<1) return;
+    if(!state.svgMounted||(state.slots.length&&state.images.length<1)) return;
+    try{
     ensurePrepared();
     var rels=state.images.map(function(it,i){return 'images/img'+(i+1)+'.'+it.ext;});
     var inner=serialize(rels);
@@ -545,6 +577,7 @@ svgInner+'\n'+
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function(){URL.revokeObjectURL(a.href);},4000);
     setMsg('Downloaded '+root+'.zip','good');
+    }catch(e){setMsg('Could not export the banner: '+(e.message||'Please try again.'),'err');}
   }
 
   // ---------- wiring ----------
@@ -559,7 +592,7 @@ svgInner+'\n'+
     dz.addEventListener('drop',function(e){ var f=e.dataTransfer.files; if(p[1]==='svg'){ if(f[0])loadSVG(f[0]); } else addImages(f); });
   });
   ['purl','pname','secs','fade','loops'].forEach(function(id){ var el=$(id); el.addEventListener('input',update); el.addEventListener('change',update); });
-  window.addEventListener('resize',function(){ if(state.svgMounted&&state.images.length) update(); });
+  window.addEventListener('resize',function(){ if(state.svgMounted) update(); });
   $('download').onclick=download;
   update();
 })();
